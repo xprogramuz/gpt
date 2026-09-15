@@ -9,6 +9,19 @@ Cloud Agent sizning Windows diskingizga kira olmaydi. Shuning uchun tiklashni **
 
 Eski Cursor dasturi o‘sha papkada emas — u yerda **sozlamalar, chatlar va kengaytmalar** turadi. Tiklagandan keyin Cursor ilovasini ochsangiz, avvalgi holat qaytadi.
 
+## Eski Cursor qani?
+
+Avval `find-cursor-backup.bat` ni ishga tushiring. U `Desktop\projects` va OneDrive Desktop ni ko‘rsatadi.
+
+Qidiriladigan joylar:
+
+- `C:\Users\Xp\Desktop\projects`
+- `C:\Users\Xp\OneDrive\Desktop\projects`
+- papka ichidagi `cursor-backup`, `Cursor`, `.cursor`, `settings.json`, `state.vscdb`
+
+Topilsa — `restore-cursor.bat` ni ishga tushiring.
+Topilmasa — bu papkada faqat loyiha kodlari bor, eski Cursor holati yo‘q.
+
 ## Qanday ishlatish
 
 1. Cursor ni **to‘liq yoping** (pastki trey belgisini ham).

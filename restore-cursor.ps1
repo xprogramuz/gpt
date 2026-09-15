@@ -117,9 +117,26 @@ function Find-DirectoryByName {
     return $matches
 }
 
+function Get-DefaultProjectRoots {
+    $homeDir = $env:USERPROFILE
+    $paths = @(
+        $ProjectsPath,
+        $BackupPath,
+        (Join-Path $homeDir "Desktop\projects"),
+        (Join-Path $homeDir "Desktop\projects\cursor-backup"),
+        (Join-Path $homeDir "OneDrive\Desktop\projects"),
+        (Join-Path $homeDir "OneDrive\Desktop\projects\cursor-backup")
+    )
+    if ($env:OneDrive) {
+        $paths += (Join-Path $env:OneDrive "Desktop\projects")
+        $paths += (Join-Path $env:OneDrive "Desktop\projects\cursor-backup")
+    }
+    return $paths
+}
+
 function Get-SearchRoots {
     $roots = New-Object System.Collections.Generic.List[string]
-    foreach ($path in @($BackupPath, $ProjectsPath)) {
+    foreach ($path in (Get-DefaultProjectRoots)) {
         if ($path -and (Test-Path -LiteralPath $path) -and -not ($roots -contains $path)) {
             $roots.Add($path) | Out-Null
         }
