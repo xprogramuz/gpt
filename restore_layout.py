@@ -204,3 +204,16 @@ def find_best_backup_root(search_roots: Iterable[Path]) -> Optional[Dict[str, ob
     ]
     ranked.sort(key=lambda item: int(item["score"]), reverse=True)
     return ranked[0]
+
+
+if __name__ == "__main__":
+    print("Bu fayl Cursor ni tiklamaydi.")
+    print("Ishga tushiring: restore-cursor.ps1")
+    print()
+    print("PowerShell da shuni yozing:")
+    print(
+        'irm "https://raw.githubusercontent.com/xprogramuz/gpt/'
+        'cursor/restore-cursor-backup-3352/restore-cursor.ps1" '
+        '| iex'
+    )
+
