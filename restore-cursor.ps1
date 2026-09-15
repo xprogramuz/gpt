@@ -21,6 +21,7 @@
 [CmdletBinding()]
 param(
     [string]$BackupPath = "C:\Users\Xp\Desktop\projects\cursor-backup",
+    [string]$ProjectsPath = "C:\Users\Xp\Desktop\projects",
     [switch]$WhatIf,
     [switch]$Inventory,
     [switch]$KeepCursorRunning
@@ -114,6 +115,76 @@ function Find-DirectoryByName {
         }
     }
     return $matches
+}
+
+function Get-SearchRoots {
+    $roots = New-Object System.Collections.Generic.List[string]
+    foreach ($path in @($BackupPath, $ProjectsPath)) {
+        if ($path -and (Test-Path -LiteralPath $path) -and -not ($roots -contains $path)) {
+            $roots.Add($path) | Out-Null
+        }
+    }
+    if ($roots.Count -eq 0 -and $BackupPath) {
+        $roots.Add($BackupPath) | Out-Null
+    }
+    return $roots
+}
+
+function Find-BestBackupRoot {
+    $roots = @(Get-SearchRoots)
+    $ranked = New-Object System.Collections.Generic.List[object]
+
+    foreach ($root in $roots) {
+        if (-not (Test-Path -LiteralPath $root)) { continue }
+        $layout = Resolve-BackupLayout -Root $root
+        if (Test-HasRestorableData $layout) {
+            $score = 0
+            if ($layout.RoamingCursor) { $score += 100 }
+            if ($layout.DotCursor) { $score += 80 }
+            if ($layout.LooseUser) { $score += 40 }
+            if ($layout.LooseSettings) { $score += 10 }
+            $ranked.Add([pscustomobject]@{ Path = $root; Score = $score; Layout = $layout }) | Out-Null
+        }
+
+        try {
+            $children = Get-ChildItem -LiteralPath $root -Directory -Force -ErrorAction SilentlyContinue
+        } catch {
+            $children = @()
+        }
+        foreach ($child in $children) {
+            $childLayout = Resolve-BackupLayout -Root $child.FullName
+            if (-not (Test-HasRestorableData $childLayout)) { continue }
+            $score = 0
+            if ($childLayout.RoamingCursor) { $score += 100 }
+            if ($childLayout.DotCursor) { $score += 80 }
+            if ($childLayout.LooseUser) { $score += 40 }
+            if ($childLayout.LooseSettings) { $score += 10 }
+            if ($child.Name -match 'cursor') { $score += 15 }
+            $ranked.Add([pscustomobject]@{ Path = $child.FullName; Score = $score; Layout = $childLayout }) | Out-Null
+        }
+    }
+
+    if ($ranked.Count -eq 0) { return $null }
+
+    $filtered = New-Object System.Collections.Generic.List[object]
+    foreach ($item in $ranked) {
+        $current = $item.Path.TrimEnd("\")
+        $hasDescendant = $false
+        foreach ($other in $ranked) {
+            $otherPath = $other.Path.TrimEnd("\")
+            if ($otherPath -eq $current) { continue }
+            $prefix = $current + "\"
+            if ($otherPath.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+                $hasDescendant = $true
+                break
+            }
+        }
+        if (-not $hasDescendant) {
+            $filtered.Add($item) | Out-Null
+        }
+    }
+    if ($filtered.Count -eq 0) { return $null }
+    return $filtered | Sort-Object Score -Descending | Select-Object -First 1
 }
 
 function Resolve-BackupLayout {
@@ -380,17 +451,35 @@ function Show-Inventory {
 Write-Host ""
 Write-Host "Cursor ni eski holatiga qaytarish" -ForegroundColor White
 Write-Host "=================================" -ForegroundColor White
+Write-Host "Qidiriladi:"
+Write-Host "  $BackupPath"
+Write-Host "  $ProjectsPath"
 
-if (-not (Test-Path -LiteralPath $BackupPath)) {
-    Write-ErrMsg "Backup papkasi yoq: $BackupPath"
+$chosen = Find-BestBackupRoot
+if (-not $chosen) {
+    Write-ErrMsg "Cursor backup topilmadi."
     Write-Host ""
     Write-Host "Tekshiring:"
-    Write-Host "  1) Papka haqiqatan ham bor-mi (Explorer da oching)"
-    Write-Host "  2) Boshqa diskda bolsa: .\restore-cursor.ps1 -BackupPath `"D:\path\cursor-backup`""
+    Write-Host "  1) Explorer da oching: $ProjectsPath"
+    Write-Host "  2) Ichida Cursor, .cursor yoki settings.json bormi"
+    Write-Host "  3) Boshqa joyda bolsa: .\restore-cursor.ps1 -BackupPath `"D:\path\cursor-backup`""
+    foreach ($root in @($BackupPath, $ProjectsPath)) {
+        if (Test-Path -LiteralPath $root) {
+            Write-Host ""
+            Write-Host "Papka ichida ($root):"
+            Get-ChildItem -LiteralPath $root -Force -ErrorAction SilentlyContinue | Select-Object -First 40 | ForEach-Object {
+                Write-Host ("  {0,-12} {1}" -f $_.Mode, $_.Name)
+            }
+        } else {
+            Write-WarnMsg "Yoq: $root"
+        }
+    }
     exit 1
 }
 
-$layout = Resolve-BackupLayout -Root $BackupPath
+$BackupPath = $chosen.Path
+$layout = $chosen.Layout
+Write-Ok "Topilgan backup: $BackupPath"
 Show-Inventory -Layout $layout -Root $BackupPath
 
 if ($Inventory) {

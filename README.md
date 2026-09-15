@@ -1,12 +1,13 @@
 # Cursor ni eski holatiga qaytarish
 
-Kompyuter qayta o‘rnatilgandan keyin Cursor sozlamalari, kengaytmalar va chatlarni
+Kompyuter qayta o‘rnatilgandan keyin Cursor sozlamalari, kengaytmalar va chatlarni tiklash.
 
-`C:\Users\Xp\Desktop\projects\cursor-backup`
-
-papkasidan tiklash.
+Skript avval `C:\Users\Xp\Desktop\projects\cursor-backup` ni, keyin butun
+`C:\Users\Xp\Desktop\projects` papkasini qidiradi (Cursor o‘zi backup olgan joy).
 
 Cloud Agent sizning Windows diskingizga kira olmaydi. Shuning uchun tiklashni **shu kompyuterda**, Cursor yopiq holda ishga tushiring.
+
+Eski Cursor dasturi o‘sha papkada emas — u yerda **sozlamalar, chatlar va kengaytmalar** turadi. Tiklagandan keyin Cursor ilovasini ochsangiz, avvalgi holat qaytadi.
 
 ## Qanday ishlatish
 

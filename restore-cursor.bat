@@ -5,7 +5,7 @@ title Cursor ni eski holatiga qaytarish
 
 echo.
 echo Cursor yopiladi va backupdan tiklanadi.
-echo Backup: C:\Users\Xp\Desktop\projects\cursor-backup
+echo Qidiriladi: C:\Users\Xp\Desktop\projects  va  cursor-backup
 echo.
 echo Davom etish uchun istalgan tugmani bosing. Bekor qilish: Ctrl+C
 pause >nul

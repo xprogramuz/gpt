@@ -149,3 +149,58 @@ def has_restorable_data(layout: Dict[str, Optional[str]]) -> bool:
         "loose_extensions_txt",
     )
     return any(layout.get(key) for key in keys)
+
+
+def _layout_score(layout: Dict[str, Optional[str]], folder_name: str = "") -> int:
+    score = 0
+    if layout.get("roaming_cursor"):
+        score += 100
+    if layout.get("dot_cursor"):
+        score += 80
+    if layout.get("loose_user"):
+        score += 40
+    if layout.get("loose_settings"):
+        score += 10
+    if "cursor" in folder_name.lower():
+        score += 15
+    return score
+
+
+def find_best_backup_root(search_roots: Iterable[Path]) -> Optional[Dict[str, object]]:
+    ranked: List[Dict[str, object]] = []
+    seen: set[str] = set()
+
+    for root in search_roots:
+        root = Path(root)
+        candidates = [root]
+        if root.is_dir():
+            candidates.extend(sorted(p for p in root.iterdir() if p.is_dir()))
+        for candidate in candidates:
+            key = str(candidate)
+            if key in seen:
+                continue
+            seen.add(key)
+            layout = resolve_backup_layout(candidate)
+            if not has_restorable_data(layout):
+                continue
+            ranked.append(
+                {
+                    "path": candidate,
+                    "score": _layout_score(layout, candidate.name),
+                    "layout": layout,
+                }
+            )
+
+    if not ranked:
+        return None
+    paths = [Path(item["path"]) for item in ranked]
+    ranked = [
+        item
+        for item in ranked
+        if not any(
+            Path(item["path"]) != other and other.is_relative_to(Path(item["path"]))
+            for other in paths
+        )
+    ]
+    ranked.sort(key=lambda item: int(item["score"]), reverse=True)
+    return ranked[0]

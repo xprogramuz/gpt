@@ -75,6 +75,21 @@ class ResolveBackupLayoutTest(unittest.TestCase):
         self.assertIsNotNone(layout["roaming_cursor"])
         self.assertTrue(layout["roaming_cursor"].endswith("Cursor"))
 
+    def test_finds_backup_among_project_folders(self) -> None:
+        from restore_layout import find_best_backup_root
+
+        (self.tmpdir / "web-app").mkdir()
+        (self.tmpdir / "web-app" / "package.json").write_text("{}", encoding="utf-8")
+        backup = self.tmpdir / "cursor-backup"
+        user = backup / "AppData" / "Roaming" / "Cursor" / "User"
+        user.mkdir(parents=True)
+        (user / "settings.json").write_text("{}", encoding="utf-8")
+        (user / "globalStorage").mkdir()
+
+        chosen = find_best_backup_root([self.tmpdir])
+        self.assertIsNotNone(chosen)
+        self.assertEqual(chosen["path"], backup)
+
 
 if __name__ == "__main__":
     unittest.main()
